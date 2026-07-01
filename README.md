@@ -1,92 +1,74 @@
 # Agent Memory System
 
-AI Agent 记忆系统，参考 **TencentDB Agent Memory** 架构，包含完整的**官方源码**和**独立实现**两种版本。
+AI Agent 记忆系统，参考 **TencentDB Agent Memory** 的四层记忆架构，独立实现的版本。
+
+## 核心能力
+
+- **四层记忆架构**: L0 → L1 → L2 → L3 自动流转
+- **向量搜索**: 本地 BGE-small-zh embedding，永久免费
+- **混合召回**: keyword + vector RRF 融合，精准匹配
+- **双模式支持**: OpenClaw 插件 / 独立 API 服务
+- **完整中文文档**: 架构、配置、流程全覆盖
 
 ## 项目结构
 
 ```
 agent-memory-system/
-├── memory-tencentdb-src/        # TencentDB 官方源码（95 个 TS 文件）
-│   ├── src/core/                # 核心模块
-│   ├── src/adapters/            # 适配器
-│   ├── src/gateway/             # 网关
-│   ├── src/offload/             # 上下文卸载
-│   └── package.json
-│
-├── src/                         # 独立实现（Python，可用于任何框架）
-│   ├── memory_service.py        # 统一接口
+├── src/                         # 核心引擎（Python 独立实现）
+│   ├── memory_service.py        # 统一服务接口
 │   ├── embedding.py             # 向量化引擎
 │   ├── storage.py               # SQLite 存储
-│   └── recall.py                # RRF 召回算法
+│   ├── recall.py                # RRF 召回算法
+│   └── extraction.py            # L1/L2/L3 提取
 │
-├── standalone-api/              # 独立 API 服务（Python）
-│   ├── server.py
-│   └── client.py
+├── standalone-api/              # 独立 API 服务
+│   ├── server.py                # FastAPI 服务
+│   ├── client.py                # 调用示例
+│   └── requirements.txt
 │
 ├── openclaw-plugin/             # OpenClaw 插件配置
 │   └── config/memory-tencentdb.json
 │
-└── embedding_server.py          # 本地 BGE embedding 服务
+├── embedding_server.py          # 本地 BGE embedding 服务
+├── config/                      # 配置示例
+└── docs/                        # 详细文档
+    ├── ARCHITECTURE.md          # 架构设计
+    ├── CONFIG.md                # 配置参数
+    └── MEMORY_FLOW.md           # 记忆流转
 ```
 
-## 核心能力
+## 快速开始
 
-| 功能 | memory-tencentdb (TS) | agent-memory (Python) |
-|------|----------------------|----------------------|
-| L0 原始对话捕获 | ✅ | ✅ |
-| L1 记忆提取 | ✅ 完整 LLM | ✅ 简化版 |
-| L2 场景归纳 | ✅ | ✅ 框架 |
-| L3 用户画像 | ✅ | ✅ 框架 |
-| 向量搜索 | ✅ | ✅ |
-| RRF 混合召回 | ✅ | ✅ |
-| 存储 | SQLite + vec | SQLite |
-
-## 两种使用方式
-
-### 方式一：基于 TencentDB Agent Memory（推荐 OpenClaw 用户）
-
-使用官方插件，在 OpenClaw 中直接启用：
+### 方式一：OpenClaw 插件
 
 ```bash
-# 复制配置
 cp openclaw-plugin/config/memory-tencentdb.json ~/.openclaw/memory-tencentdb.json
-
-# 重启 Gateway
+python embedding_server.py  # 启动 embedding 服务
 launchctl stop ai.openclaw.gateway && launchctl start ai.openclaw.gateway
 ```
 
-### 方式二：独立 Python 服务（适合任何框架）
+### 方式二：独立 API（任何框架都能用）
 
 ```bash
 cd standalone-api
 pip install -r requirements.txt
-python server.py
+python server.py  # 启动服务 http://localhost:18790
 ```
 
-然后用 client 调用：
+调用示例：
 ```python
 from client import MemoryClient
 client = MemoryClient()
-client.add_memory("用户喜欢 AI", keywords=["AI"])
-client.recall("用户兴趣是什么？")
+client.add_memory("用户喜欢 AI 技术", keywords=["AI"])
+results = client.recall("用户兴趣是什么？")
 ```
 
-## 启动 Embedding 服务（两种方式都需要）
+## 参考架构
 
-```bash
-python embedding_server.py
-```
-
-## 官方源码说明
-
-`memory-tencentdb-src/` 目录包含 TencentDB Agent Memory 的完整 TypeScript 源码：
-- 来自 `~/.openclaw/npm/node_modules/@tencentdb-agent-memory/memory-tencentdb/`
-- 95 个 TypeScript 文件
-- 可作为开发参考或二次开发
-
-如需作为 npm 包使用，参考其 `package.json` 的 `"scripts"` 和 `"dependencies"`。
+本项目参考 TencentDB Agent Memory 的设计：
+- 官方仓库: https://github.com/tencentdb/memory-tencentdb
+- MIT License
 
 ## License
 
-- 自实现部分: MIT
-- TencentDB Agent Memory 源码: 见 `memory-tencentdb-src/LICENSE`
+MIT
