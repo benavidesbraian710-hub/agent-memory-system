@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd ~/github/agent-memory-system && rm -rf .omc && git add -A && git commit -m \\\"$(cat <<'EOF'\\nAdd dual-mode architecture: OpenClaw plugin + Standalone API\\n\\nCo-Authored-By: Claude Opus 4...",
+  "error": "Exit code 1\n[main 7053b00] Add dual-mode architecture: OpenClaw plugin + Standalone API\n 2 files changed, 21 deletions(-)\n delete mode 100644 .omc/state/sessions/9ae21d31-9915-4a4f-95e5-57dcef736dc8/last-tool-error-state.json\n delete mode 100644 .omc/state/sessions/9ae21d31-9915-4a4f-95e5-57dcef736dc8/pre-tool-advisory-throttle.json\nremote: error: GH013: Repository rule violations found for refs/heads/main.        \nremote: \nremote: - GITHUB PUSH PROTECTION        \nremote:   —————————————————————...",
+  "timestamp": "2026-07-01T03:07:15.189Z",
+  "retry_count": 1
+}

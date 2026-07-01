@@ -1,0 +1,82 @@
+{
+  "id": "memory-tencentdb",
+  "name": "Memory (Agent Memory System)",
+  "description": "四层记忆系统 — 捕获、结构化、用户画像，支持本地向量搜索",
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": ["tdai_memory_search", "tdai_conversation_search"]
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": true,
+    "properties": {
+      "capture": {
+        "type": "object",
+        "description": "对话自动捕获设置 (L0)",
+        "properties": {
+          "enabled": { "type": "boolean", "default": true },
+          "excludeAgents": { "type": "array", "items": { "type": "string" }, "default": [] },
+          "l0l1RetentionDays": { "type": "number", "default": 90 },
+          "cleanTime": { "type": "string", "default": "03:00" }
+        }
+      },
+      "extraction": {
+        "type": "object",
+        "description": "记忆提取设置 (L1)",
+        "properties": {
+          "enabled": { "type": "boolean", "default": true },
+          "enableDedup": { "type": "boolean", "default": true },
+          "maxMemoriesPerSession": { "type": "number", "default": 10 }
+        }
+      },
+      "pipeline": {
+        "type": "object",
+        "description": "L1→L2→L3 管线调度设置",
+        "properties": {
+          "everyNConversations": { "type": "number", "default": 5 },
+          "enableWarmup": { "type": "boolean", "default": true },
+          "l1IdleTimeoutSeconds": { "type": "number", "default": 600 },
+          "l2DelayAfterL1Seconds": { "type": "number", "default": 10 },
+          "l2MinIntervalSeconds": { "type": "number", "default": 900 },
+          "l2MaxIntervalSeconds": { "type": "number", "default": 3600 },
+          "sessionActiveWindowHours": { "type": "number", "default": 24 }
+        }
+      },
+      "recall": {
+        "type": "object",
+        "description": "记忆召回设置",
+        "properties": {
+          "enabled": { "type": "boolean", "default": true },
+          "maxResults": { "type": "number", "default": 5 },
+          "scoreThreshold": { "type": "number", "default": 0.3 },
+          "strategy": { "type": "string", "enum": ["keyword", "embedding", "hybrid"], "default": "hybrid" }
+        }
+      },
+      "persona": {
+        "type": "object",
+        "description": "场景归纳与用户画像设置 (L2/L3)",
+        "properties": {
+          "triggerEveryN": { "type": "number", "default": 50 },
+          "maxScenes": { "type": "number", "default": 15 },
+          "backupCount": { "type": "number", "default": 3 },
+          "sceneBackupCount": { "type": "number", "default": 10 }
+        }
+      },
+      "embedding": {
+        "type": "object",
+        "description": "向量搜索配置",
+        "properties": {
+          "enabled": { "type": "boolean", "default": true },
+          "provider": { "type": "string", "default": "openai" },
+          "baseUrl": { "type": "string", "default": "http://localhost:8080/v1" },
+          "apiKey": { "type": "string", "default": "no-key" },
+          "model": { "type": "string", "default": "bge-small-zh-v1.5" },
+          "dimensions": { "type": "number", "default": 512 },
+          "timeoutMs": { "type": "number", "default": 10000 }
+        }
+      }
+    }
+  }
+}
