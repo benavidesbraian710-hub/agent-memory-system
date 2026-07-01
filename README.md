@@ -1,132 +1,92 @@
 # Agent Memory System
 
-通用 AI Agent 记忆系统，支持**两种运行模式**，开箱即用。
-
-## 核心特性
-
-- **四层记忆架构**: L0 → L1 → L2 → L3 自动流转
-- **向量搜索**: 本地 BGE-small-zh embedding，永久免费
-- **混合召回**: keyword + vector RRF 融合，精准匹配
-- **双模式支持**: OpenClaw 插件模式 / 独立 API 服务
-
-## 两种运行模式
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    模式一: OpenClaw 插件                     │
-│         适用于 OpenClaw 平台内的 Agent                       │
-│         配置简单，一行启动                                    │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│                    模式二: 独立 API 服务                      │
-│         适用于任何框架开发的 Agent                            │
-│         HTTP API 调用，跨平台                                 │
-└─────────────────────────────────────────────────────────────┘
-```
+AI Agent 记忆系统，参考 **TencentDB Agent Memory** 架构，包含完整的**官方源码**和**独立实现**两种版本。
 
 ## 项目结构
 
 ```
 agent-memory-system/
-├── src/                          # 核心引擎（通用）
-│   ├── memory_service.py         # 统一服务接口
-│   ├── embedding.py              # 向量化引擎
-│   ├── storage.py                # SQLite 存储
-│   └── recall.py                 # RRF 召回算法
+├── memory-tencentdb-src/        # TencentDB 官方源码（95 个 TS 文件）
+│   ├── src/core/                # 核心模块
+│   ├── src/adapters/            # 适配器
+│   ├── src/gateway/             # 网关
+│   ├── src/offload/             # 上下文卸载
+│   └── package.json
 │
-├── standalone-api/               # 模式二: 独立服务
-│   ├── server.py                 # API 服务
-│   ├── client.py                 # 调用示例
-│   └── requirements.txt
+├── src/                         # 独立实现（Python，可用于任何框架）
+│   ├── memory_service.py        # 统一接口
+│   ├── embedding.py             # 向量化引擎
+│   ├── storage.py               # SQLite 存储
+│   └── recall.py                # RRF 召回算法
 │
-├── openclaw-plugin/              # 模式一: OpenClaw 插件
-│   ├── config/
-│   │   └── memory-tencentdb.json # 插件配置
-│   └── README.md
+├── standalone-api/              # 独立 API 服务（Python）
+│   ├── server.py
+│   └── client.py
 │
-├── embedding_server.py           # Embedding 服务（BGE）
-├── config/                       # 通用配置示例
-├── docs/                         # 详细文档
-│   ├── ARCHITECTURE.md
-│   ├── CONFIG.md
-│   └── MEMORY_FLOW.md
-└── examples/                     # 使用示例
+├── openclaw-plugin/             # OpenClaw 插件配置
+│   └── config/memory-tencentdb.json
+│
+└── embedding_server.py          # 本地 BGE embedding 服务
 ```
 
-## 快速开始
+## 核心能力
 
-### 模式一：OpenClaw 插件
+| 功能 | memory-tencentdb (TS) | agent-memory (Python) |
+|------|----------------------|----------------------|
+| L0 原始对话捕获 | ✅ | ✅ |
+| L1 记忆提取 | ✅ 完整 LLM | ✅ 简化版 |
+| L2 场景归纳 | ✅ | ✅ 框架 |
+| L3 用户画像 | ✅ | ✅ 框架 |
+| 向量搜索 | ✅ | ✅ |
+| RRF 混合召回 | ✅ | ✅ |
+| 存储 | SQLite + vec | SQLite |
+
+## 两种使用方式
+
+### 方式一：基于 TencentDB Agent Memory（推荐 OpenClaw 用户）
+
+使用官方插件，在 OpenClaw 中直接启用：
 
 ```bash
-# 1. 复制配置
+# 复制配置
 cp openclaw-plugin/config/memory-tencentdb.json ~/.openclaw/memory-tencentdb.json
 
-# 2. 启动 embedding 服务
-python embedding_server.py
-
-# 3. 重启 Gateway
-launchctl stop ai.openclaw.gateway
-launchctl start ai.openclaw.gateway
+# 重启 Gateway
+launchctl stop ai.openclaw.gateway && launchctl start ai.openclaw.gateway
 ```
 
-### 模式二：独立 API 服务
+### 方式二：独立 Python 服务（适合任何框架）
 
 ```bash
-# 1. 安装依赖
 cd standalone-api
 pip install -r requirements.txt
-
-# 2. 启动服务
 python server.py
+```
 
-# 3. 客户端调用
+然后用 client 调用：
+```python
 from client import MemoryClient
 client = MemoryClient()
-client.add_memory("用户喜欢 AI 技术", keywords=["AI"])
-results = client.recall("用户兴趣是什么？")
+client.add_memory("用户喜欢 AI", keywords=["AI"])
+client.recall("用户兴趣是什么？")
 ```
 
-## 核心 API
+## 启动 Embedding 服务（两种方式都需要）
 
-### MemoryService (直接调用)
-
-```python
-from src import MemoryService
-
-service = MemoryService(config)
-service.add_memory("内容", keywords=["标签"])
-results = service.recall("查询")
+```bash
+python embedding_server.py
 ```
 
-### HTTP API (远程调用)
+## 官方源码说明
 
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/memory` | POST | 添加记忆 |
-| `/recall` | POST | 召回记忆 |
-| `/session` | POST | 添加会话 |
-| `/stats` | GET | 获取统计 |
+`memory-tencentdb-src/` 目录包含 TencentDB Agent Memory 的完整 TypeScript 源码：
+- 来自 `~/.openclaw/npm/node_modules/@tencentdb-agent-memory/memory-tencentdb/`
+- 95 个 TypeScript 文件
+- 可作为开发参考或二次开发
 
-## 四层记忆架构
-
-| 层级 | 名称 | 说明 |
-|------|------|------|
-| L0 | 原始对话 | 完整捕获对话原文 |
-| L1 | 记忆提取 | 自动提取关键信息 + 向量化 |
-| L2 | 场景归纳 | 跨对话归纳主题 |
-| L3 | 用户画像 | 总结用户偏好特征 |
-
-## 配置参数
-
-详见 [docs/CONFIG.md](docs/CONFIG.md)
-
-主要配置：
-- `embedding.provider`: `openai` | `local`
-- `embedding.baseUrl`: API 地址
-- `recall.strategy`: `keyword` | `embedding` | `hybrid`
-- `recall.maxResults`: 召回数量
+如需作为 npm 包使用，参考其 `package.json` 的 `"scripts"` 和 `"dependencies"`。
 
 ## License
 
-MIT
+- 自实现部分: MIT
+- TencentDB Agent Memory 源码: 见 `memory-tencentdb-src/LICENSE`
